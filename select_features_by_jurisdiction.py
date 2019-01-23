@@ -35,18 +35,20 @@ try:
     selection_layer = arcpy.GetParameterAsText(4)
     selection_layer_name = arcpy.GetParameterAsText(5)
     # spatial selection type - [data type from tool]
-    selection_type = arcpy.GetParameterAsText(6)
+    overlap_type = arcpy.GetParameterAsText(6)
+    selection_search_distance = float((arcpy.GetParameterAsText(7)))
     # jurisdiction layer - [data type from tool]
-    jurisdiction_layer = arcpy.GetParameterAsText(7)
-    jurisdiction_layer_name = arcpy.GetParameterAsText(8)
+    jurisdiction_layer = arcpy.GetParameterAsText(8)
+    jurisdiction_layer_name = arcpy.GetParameterAsText(9)
     # name field for jursidiction layer - [data type from tool]
-    jurisdiction_layer_name_field = arcpy.GetParameterAsText(9)
+    jurisdiction_layer_name_field = arcpy.GetParameterAsText(10)
     # field list for cursor
     jurisdiction_layer_field = ['{}'.format(jurisdiction_layer_name_field)]
     # Time stamp variables
     currentTime = datetime.datetime.now()
     # Date formatted as month-day-year (1-1-2017)
     dateToday = currentTime.strftime("%m_%d_%Y")
+    search_distance_overlap_types = [' WITHIN_A_DISTANCE_GEODESIC', 'WITHIN_A_DISTANCE', 'WITHIN_A_DISTANCE_3D', 'INTERSECT', 'INTERSECT_3D', 'HAVE_THEIR_CENTER_IN', 'CONTAINS', 'WITHIN']
 
     # 2. Create Project Geodatabase
     arcpy.CreateFileGDB_management(project_dir,'Results','10.0')
@@ -75,23 +77,26 @@ try:
             where_clause = "{} = '{}'".format(jurisdiction_layer_name_field,row[0])
             arcpy.SelectLayerByAttribute_management(jurisdiction_layer_name, 'NEW_SELECTION',where_clause)
             # select target layer features that have centroid in jurisdiction layer
-            arcpy.SelectLayerByLocation_management(target_layer_name, 'HAVE_THEIR_CENTER_IN', jurisdiction_layer_name, selection_type='NEW_SELECTION')
+            arcpy.SelectLayerByLocation_management(target_layer_name, 'HAVE_THEIR_CENTER_IN', jurisdiction_layer_name, overlap_type='NEW_SELECTION')
             # get count of target layer features that have centroid in jursidiction layer
             match_count_target = int(arcpy.GetCount_management(target_layer_name)[0])
             # make sure features are selected before moving forward
             if match_count_target > 0:
                 # select from selected target layer features that meet spatial selection criteria for selection layer
-                arcpy.SelectLayerByLocation_management(target_layer_name, selection_type, selection_layer_name, selection_type='SUBSET_SELECTION')
+                if overlap_type not in search_distance_overlap_types:
+                    arcpy.SelectLayerByLocation_management(target_layer_name, overlap_type, selection_layer_name, overlap_type='SUBSET_SELECTION')
+                else:
+                    arcpy.SelectLayerByLocation_management(target_layer_name, overlap_type, selection_layer_name, selection_search_distance, overlap_type='SUBSET_SELECTION')
                 # get count of selected features from target layer
                 match_count_target_selection = int(arcpy.GetCount_management(target_layer_name)[0])
                 # make sure features are selected before moving forward
                 if match_count_target_selection > 0:
                     # add message
-                    arcpy.AddMessage('There are {} features from {} that {} {} in {}'.format(match_count_target_selection, target_layer_name,selection_type,selection_layer_name,row[0]))
+                    arcpy.AddMessage('There are {} features from {} that {} {} in {}'.format(match_count_target_selection, target_layer_name,overlap_type,selection_layer_name,row[0]))
                     # export layer
-                    arcpy.CopyFeatures_management(target_layer_name, os.path.join(project_gdb, '{}_{}_{}_{}'.format(target_layer_name,selection_type,selection_layer_name,row[0])))
+                    arcpy.CopyFeatures_management(target_layer_name, os.path.join(project_gdb, '{}_{}_{}_{}'.format(target_layer_name,overlap_type,selection_layer_name,row[0])))
                 else:
-                    arcpy.AddWarning('No features from {} that are within {} {} {}'.format(target_layer_name,row[0],selection_type,selection_layer_name))
+                    arcpy.AddWarning('No features from {} that are within {} {} {}'.format(target_layer_name,row[0],overlap_type,selection_layer_name))
             else:
                 arcpy.AddWarning('There were no features from {} that have their centroids in {}\n'.format(target_layer_name,row[0]))
             # end if/else
