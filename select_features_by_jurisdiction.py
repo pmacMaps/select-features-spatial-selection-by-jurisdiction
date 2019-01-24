@@ -20,6 +20,23 @@
 # Import system modules
 import arcpy, datetime, os, errorLogger
 
+# function to convert dash or whitespace to underscore
+# a more broad regex could be used here
+def convertToUnderscore(user_string):
+    # dash condition
+    if "-" in user_string:
+        user_string = user_string.replace("-","_")
+    # space condition
+    elif " " in user_string:
+        user_string = user_string.replace(" ","_")
+    # period condition
+    elif "." in user_string:
+        user_string = user_string.replace(".","_")
+    else:
+        pass
+    return user_string
+# end function
+
 # Run geoprocessing tool.
 # If there is an error with the tool, it will break and run the code within the except statement
 try:
@@ -35,7 +52,7 @@ try:
     selection_layer = arcpy.GetParameterAsText(4)
     selection_layer_name = arcpy.GetParameterAsText(5)
     # spatial selection type - [data type from tool]
-    overlap_type = arcpy.GetParameterAsText(6)
+    spatial_overlap_type = arcpy.GetParameterAsText(6)
     selection_search_distance = float((arcpy.GetParameterAsText(7)))
     # jurisdiction layer - [data type from tool]
     jurisdiction_layer = arcpy.GetParameterAsText(8)
@@ -51,8 +68,8 @@ try:
     search_distance_overlap_types = [' WITHIN_A_DISTANCE_GEODESIC', 'WITHIN_A_DISTANCE', 'WITHIN_A_DISTANCE_3D', 'INTERSECT', 'INTERSECT_3D', 'HAVE_THEIR_CENTER_IN', 'CONTAINS', 'WITHIN']
 
     # 2. Create Project Geodatabase
-    arcpy.CreateFileGDB_management(project_dir,'Results','10.0')
-    arcpy.AddMessage('Created project file geodatabase named {} in {}'.format(project_gdb_name,project_dir))
+    arcpy.CreateFileGDB_management(project_dir,project_gdb_name,'10.0')
+    arcpy.AddMessage('\nCreated project file geodatabase named "{}" in {}'.format(project_gdb_name,project_dir))
     project_gdb = os.path.join(project_dir,'{}.gdb'.format(project_gdb_name))
 
     # 3. Create Feature Layers
@@ -62,54 +79,59 @@ try:
     arcpy.MakeFeatureLayer_management(target_layer, target_layer_name)
     # selection layer
     arcpy.MakeFeatureLayer_management(selection_layer, selection_layer_name)
-    arcpy.AddMessage('Created feature layers for datasets')
+    arcpy.AddMessage('\nCreated feature layers for datasets')
 
-    # Create Search Cursor for Jursidiction Layer
-    arcpy.AddMessage('Creating search cursor on {}'.format(jurisdiction_layer_name))
+    # 4. Create Search Cursor for Jursidiction Layer
+    arcpy.AddMessage('\nCreating search cursor on {} layer'.format(jurisdiction_layer_name))
     # create search cursor
     with arcpy.da.SearchCursor(jurisdiction_layer, jurisdiction_layer_field) as cursor:
         # loop through each record in municipalities layer
         for row in cursor:
             # add message
-            arcpy.AddMessage('Selecting features from {} that have their centroid in {}'.format(target_layer_name,row[0]))
+            arcpy.AddMessage('\nSelecting features from {} that have their centroid in {}'.format(target_layer_name,row[0]))
             # attribute selection on jurisdiction layer
             # SQL query
             where_clause = "{} = '{}'".format(jurisdiction_layer_name_field,row[0])
             arcpy.SelectLayerByAttribute_management(jurisdiction_layer_name, 'NEW_SELECTION',where_clause)
             # select target layer features that have centroid in jurisdiction layer
-            arcpy.SelectLayerByLocation_management(target_layer_name, 'HAVE_THEIR_CENTER_IN', jurisdiction_layer_name, overlap_type='NEW_SELECTION')
+            arcpy.SelectLayerByLocation_management(target_layer_name, 'HAVE_THEIR_CENTER_IN', jurisdiction_layer_name, selection_type='NEW_SELECTION')
             # get count of target layer features that have centroid in jursidiction layer
             match_count_target = int(arcpy.GetCount_management(target_layer_name)[0])
             # make sure features are selected before moving forward
             if match_count_target > 0:
                 # select from selected target layer features that meet spatial selection criteria for selection layer
-                if overlap_type not in search_distance_overlap_types:
-                    arcpy.SelectLayerByLocation_management(target_layer_name, overlap_type, selection_layer_name, overlap_type='SUBSET_SELECTION')
+                if spatial_overlap_type not in search_distance_overlap_types:
+                    arcpy.SelectLayerByLocation_management(target_layer_name, spatial_overlap_type, selection_layer_name, selection_type='SUBSET_SELECTION')
                 else:
-                    arcpy.SelectLayerByLocation_management(target_layer_name, overlap_type, selection_layer_name, selection_search_distance, overlap_type='SUBSET_SELECTION')
+                    arcpy.SelectLayerByLocation_management(target_layer_name, spatial_overlap_type, selection_layer_name, selection_search_distance, selection_type='SUBSET_SELECTION')
                 # get count of selected features from target layer
                 match_count_target_selection = int(arcpy.GetCount_management(target_layer_name)[0])
                 # make sure features are selected before moving forward
                 if match_count_target_selection > 0:
                     # add message
-                    arcpy.AddMessage('There are {} features from {} that {} {} in {}'.format(match_count_target_selection, target_layer_name,overlap_type,selection_layer_name,row[0]))
+                    arcpy.AddMessage('\n\tThere are {} features from {} that {} {} in {}'.format(match_count_target_selection, target_layer_name,spatial_overlap_type,selection_layer_name,row[0]))
+                    # remove dashes and spaces from names for output layer
+                    target_layer_name_fixed = convertToUnderscore(target_layer_name)
+                    selection_layer_name_fixed = convertToUnderscore(selection_layer_name)
+                    jurisdiction_layer_name_fixed = convertToUnderscore(row[0])
                     # export layer
-                    arcpy.CopyFeatures_management(target_layer_name, os.path.join(project_gdb, '{}_{}_{}_{}'.format(target_layer_name,overlap_type,selection_layer_name,row[0])))
+                    arcpy.CopyFeatures_management(target_layer_name, os.path.join(project_gdb, '{}_{}_{}_{}'.format(target_layer_name_fixed,spatial_overlap_type,selection_layer_name_fixed,jurisdiction_layer_name_fixed)))
+                    arcpy.AddMessage('\n\tExported features from {} for {} to {}'.format(target_layer_name, row[0], project_gdb))
                 else:
-                    arcpy.AddWarning('No features from {} that are within {} {} {}'.format(target_layer_name,row[0],overlap_type,selection_layer_name))
+                    arcpy.AddWarning('\n\tNo features from {} that are within {} {} {}'.format(target_layer_name,row[0],spatial_overlap_type,selection_layer_name))
             else:
-                arcpy.AddWarning('There were no features from {} that have their centroids in {}\n'.format(target_layer_name,row[0]))
+                arcpy.AddWarning('\n\tThere were no features from {} that have their centroids in {}\n'.format(target_layer_name,row[0]))
             # end if/else
         # end for
     # end with cursor
 # If an error occurs running geoprocessing tool(s) capture error and write message
 # handle error outside of Python system
 except EnvironmentError as e:
-    arcpy.AddError('An error occured running this tool. Please review the following error messages:')
+    arcpy.AddError('\nAn error occured running this tool. Please review the following error messages:')
     # call error logger method
     errorLogger.PrintException(e)
 # handle exception error
 except Exception as e:
-    arcpy.AddError('An error occured running this tool. Please review the following error messages:')
+    arcpy.AddError('\nAn error occured running this tool. Please review the following error messages:')
     # call error logger method
     errorLogger.PrintException(e)
