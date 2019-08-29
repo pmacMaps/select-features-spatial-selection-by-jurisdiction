@@ -32,6 +32,3 @@ There are eleven user inputs for the tool's form:
 11. **Jurisdiction Layer Name Field** (string): The name of the field (case-sensitive) in the Jurisdiction layer that represents the name of each feature. For a Municipalities layer, the field may be "MUNI" or "NAME".
 
 I also added a function that converts periods ("."), spaces (" "), or dashed ("-") to underscores in the output file name.  An improvement could be a broader regex that replaces "bad characters" with an underscore.
-
-
- 
