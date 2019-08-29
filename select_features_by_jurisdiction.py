@@ -5,9 +5,7 @@
 #
 # Created on: 1/23/19
 #
-# Updated on: 1/23/19
-#
-# Description: [complete this]
+# Updated on: 8/29/2019
 #
 # Disclaimer: CUMBERLAND COUNTY ASSUMES NO LIABILITY ARISING FROM USE OF THESE MAPS OR DATA. THE MAPS AND DATA ARE PROVIDED WITHOUT
 # WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
@@ -41,23 +39,27 @@ def convertToUnderscore(user_string):
 # If there is an error with the tool, it will break and run the code within the except statement
 try:
     # 1. ArcGIS Tool User Form Inputs & Other Variables
-    # project directory - [data type from tool]
+    # project directory - folder type
     project_dir = arcpy.GetParameterAsText(0)
-    # project geodatabase name - [data type from tool]
+    # project geodatabase name - string type
     project_gdb_name = arcpy.GetParameterAsText(1)
-    # target layer - layer you want to get features for by jurisdiction - [data type from tool]
+    # target layer - layer you want to get features for by jurisdiction - feature class type
     target_layer = arcpy.GetParameterAsText(2)
+    # name of target layer - string type
     target_layer_name = arcpy.GetParameterAsText(3)
-    # selection layer - layer you want to perform spatial selection against target layer - [data type from tool]
+    # selection layer - layer you want to perform spatial selection against target layer - feature class type
     selection_layer = arcpy.GetParameterAsText(4)
+    # name of selection layer - string type
     selection_layer_name = arcpy.GetParameterAsText(5)
-    # spatial selection type - [data type from tool]
+    # spatial selection type - string; drop-down list
     spatial_overlap_type = arcpy.GetParameterAsText(6)
+    # optional distance for spatial selection type - double type
     selection_search_distance = float((arcpy.GetParameterAsText(7)))
-    # jurisdiction layer - [data type from tool]
+    # jurisdiction layer - feature class
     jurisdiction_layer = arcpy.GetParameterAsText(8)
+    # name for jurisdiction layer - string type
     jurisdiction_layer_name = arcpy.GetParameterAsText(9)
-    # name field for jursidiction layer - [data type from tool]
+    # name field for jursidiction layer -string type
     jurisdiction_layer_name_field = arcpy.GetParameterAsText(10)
     # field list for cursor
     jurisdiction_layer_field = ['{}'.format(jurisdiction_layer_name_field)]
