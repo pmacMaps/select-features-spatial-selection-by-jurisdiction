@@ -55,12 +55,16 @@ try:
     spatial_overlap_type = arcpy.GetParameterAsText(6)
     # optional distance for spatial selection type - double type
     selection_search_distance = float((arcpy.GetParameterAsText(7)))
+    # units for search distance - string; drop-down list
+    search_distance_units = arcpy.GetParameterAsText(8)
+    # combination of search distance and units
+    selection_search_distance_and_units = '{} {}'.format(str(selection_search_distance), search_distance_units)
     # jurisdiction layer - feature class
-    jurisdiction_layer = arcpy.GetParameterAsText(8)
+    jurisdiction_layer = arcpy.GetParameterAsText(9)
     # name for jurisdiction layer - string type
-    jurisdiction_layer_name = arcpy.GetParameterAsText(9)
+    jurisdiction_layer_name = arcpy.GetParameterAsText(10)
     # name field for jursidiction layer -string type
-    jurisdiction_layer_name_field = arcpy.GetParameterAsText(10)
+    jurisdiction_layer_name_field = arcpy.GetParameterAsText(11)
     # field list for cursor
     jurisdiction_layer_field = ['{}'.format(jurisdiction_layer_name_field)]
     # Time stamp variables
@@ -105,7 +109,7 @@ try:
                 if spatial_overlap_type not in search_distance_overlap_types:
                     arcpy.SelectLayerByLocation_management(target_layer_name, spatial_overlap_type, selection_layer_name, selection_type='SUBSET_SELECTION')
                 else:
-                    arcpy.SelectLayerByLocation_management(target_layer_name, spatial_overlap_type, selection_layer_name, selection_search_distance, selection_type='SUBSET_SELECTION')
+                    arcpy.SelectLayerByLocation_management(target_layer_name, spatial_overlap_type, selection_layer_name, selection_search_distance_and_units, selection_type='SUBSET_SELECTION')
                 # get count of selected features from target layer
                 match_count_target_selection = int(arcpy.GetCount_management(target_layer_name)[0])
                 # make sure features are selected before moving forward
