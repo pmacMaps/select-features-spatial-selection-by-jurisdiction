@@ -23,12 +23,14 @@ There are eleven user inputs for the tool's form:
 
 7. **Spatial Selection Type** (drop-down list): The Overlap Type for the Select By Location Analysis  tool.  See the [Esri help reference](http://desktop.arcgis.com/en/arcmap/10.5/tools/data-management-toolbox/select-layer-by-location.htm).
 
-8. **Search Distance** (double; optional input): The optional search distance. Some spatial selection types support this.  From the help: the "tool evaluates a spatial relationship in the coordinate system of the Input Feature Layer data source (the feature class on disk)."  It is possible to set the output coordinate system to evaluate the spatial relationship in.  This is a modification you would need to make to the tool.  See the [Esri help](http://desktop.arcgis.com/en/arcmap/10.5/tools/environments/output-coordinate-system.htm) for more details. 
+8. **Search Distance** (double; optional input): The optional search distance. Some spatial selection types support this.  From the help: the "tool evaluates a spatial relationship in the coordinate system of the Input Feature Layer data source (the feature class on disk)."  It is possible to set the output coordinate system to evaluate the spatial relationship in.  This is a modification you would need to make to the tool.  See the [Esri help](http://desktop.arcgis.com/en/arcmap/10.5/tools/environments/output-coordinate-system.htm) for more details.
 
-9. **Jurisdiction Layer** (feature class): The layer that will be cycled over to perform the spatial analysis (i.e. Municipalities).
+9. **Search Distance Units** (drop-down list): the optional units for the search distance.  This allows the Select By Location to execute where the search distance could be "5 miles" for example.
 
-10. **Jurisdiction Layer Name** (string): The name of jurisdictional layer. This will be used in the tool's system message and the naming of the output datasets.
+10. **Jurisdiction Layer** (feature class): The layer that will be cycled over to perform the spatial analysis (i.e. Municipalities).
 
-11. **Jurisdiction Layer Name Field** (string): The name of the field (case-sensitive) in the Jurisdiction layer that represents the name of each feature. For a Municipalities layer, the field may be "MUNI" or "NAME".
+11. **Jurisdiction Layer Name** (string): The name of jurisdictional layer. This will be used in the tool's system message and the naming of the output datasets.
+
+12. **Jurisdiction Layer Name Field** (string): The name of the field (case-sensitive) in the Jurisdiction layer that represents the name of each feature. For a Municipalities layer, the field may be "MUNI" or "NAME".
 
 I also added a function that converts periods ("."), spaces (" "), or dashed ("-") to underscores in the output file name.  An improvement could be a broader regex that replaces "bad characters" with an underscore.
